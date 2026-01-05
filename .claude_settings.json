@@ -1,0 +1,34 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/**)",
+      "Write(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/**)",
+      "Edit(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/**)",
+      "Glob(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/**)",
+      "Grep(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/**)",
+      "Read(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/.auto-claude/specs/001-fastapi-application-skeleton/**)",
+      "Write(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/.auto-claude/specs/001-fastapi-application-skeleton/**)",
+      "Edit(/home/lisboa/Project/AI/px-bughunter/.worktrees/001-fastapi-application-skeleton/.auto-claude/specs/001-fastapi-application-skeleton/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__get-library-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}
