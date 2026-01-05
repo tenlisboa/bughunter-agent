@@ -4,7 +4,7 @@ This module defines the data models for global and project-specific
 configuration using Pydantic for validation and type safety.
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -191,4 +191,160 @@ class GlobalConfig(BaseModel):
     logging: LoggingConfig = Field(
         default_factory=LoggingConfig,
         description="Logging configuration",
+    )
+
+
+# ============================================================================
+# Project Configuration Models
+# ============================================================================
+
+
+class RepositoryConfig(BaseModel):
+    """Repository configuration for project."""
+
+    url: str = Field(
+        description="Git repository URL (HTTPS or SSH)",
+    )
+    branch: str = Field(
+        default="main",
+        description="Default branch to clone/checkout",
+    )
+    clone_path: str = Field(
+        description="Local path where repository should be cloned",
+    )
+    ssh_key: Optional[str] = Field(
+        default=None,
+        description="Optional SSH key path for authentication",
+    )
+    username: Optional[str] = Field(
+        default=None,
+        description="Optional username for HTTPS authentication",
+    )
+    password: Optional[str] = Field(
+        default=None,
+        description="Optional password/token for HTTPS authentication",
+    )
+
+
+class IndexingConfig(BaseModel):
+    """Indexing rules configuration for project files."""
+
+    include: List[str] = Field(
+        default_factory=list,
+        description="List of glob patterns for files to include in indexing",
+    )
+    exclude: List[str] = Field(
+        default_factory=list,
+        description="List of glob patterns for files to exclude from indexing",
+    )
+    max_file_size: int = Field(
+        default=500,
+        description="Maximum file size to index in kilobytes",
+        ge=1,
+    )
+
+
+class OwnershipRule(BaseModel):
+    """Ownership rule mapping code paths to teams and owners."""
+
+    path: str = Field(
+        description="Glob pattern matching file paths",
+    )
+    team: str = Field(
+        description="Team name responsible for this path",
+    )
+    owners: List[str] = Field(
+        default_factory=list,
+        description="List of owner email addresses or identifiers",
+    )
+
+
+class OwnershipConfig(BaseModel):
+    """Ownership mapping configuration."""
+
+    rules: List[OwnershipRule] = Field(
+        default_factory=list,
+        description="List of ownership rules (first match wins)",
+    )
+
+
+class ProjectSettings(BaseModel):
+    """Project-specific analysis and notification settings."""
+
+    enable_static_analysis: bool = Field(
+        default=True,
+        description="Enable static code analysis",
+    )
+    enable_security_scanning: bool = Field(
+        default=True,
+        description="Enable security vulnerability scanning",
+    )
+    enable_code_quality_checks: bool = Field(
+        default=True,
+        description="Enable code quality checks",
+    )
+    notify_on_high_severity: bool = Field(
+        default=True,
+        description="Send notifications for high severity issues",
+    )
+    notify_on_medium_severity: bool = Field(
+        default=False,
+        description="Send notifications for medium severity issues",
+    )
+    notification_channels: List[str] = Field(
+        default_factory=list,
+        description="List of notification channels (slack, email, etc.)",
+    )
+    complexity_threshold: int = Field(
+        default=10,
+        description="Cyclomatic complexity threshold",
+        ge=1,
+    )
+    duplication_threshold: int = Field(
+        default=5,
+        description="Code duplication threshold percentage",
+        ge=1,
+        le=100,
+    )
+
+
+class ProjectConfig(BaseModel):
+    """Project-specific configuration.
+
+    This model represents the structure of config/projects/*.yaml files
+    and includes all settings for a specific project/repository.
+    """
+
+    name: str = Field(
+        description="Unique project identifier (used as key in config system)",
+    )
+    display_name: str = Field(
+        description="Human-readable project name",
+    )
+    description: str = Field(
+        default="",
+        description="Project description",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Whether this project is enabled for analysis",
+    )
+    repository: RepositoryConfig = Field(
+        description="Repository configuration",
+    )
+    languages: List[str] = Field(
+        default_factory=list,
+        description="List of programming languages used in the project",
+    )
+    indexing: IndexingConfig = Field(
+        default_factory=IndexingConfig,
+        description="File indexing rules",
+    )
+    ownership: OwnershipConfig = Field(
+        default_factory=OwnershipConfig,
+        description="Code ownership mapping",
+    )
+    settings: ProjectSettings = Field(
+        default_factory=ProjectSettings,
+        description="Project-specific analysis settings",
     )
