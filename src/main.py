@@ -5,10 +5,16 @@ the FastAPI application with proper configuration and metadata.
 """
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from src.config import settings
-from src.core import RequestLoggingMiddleware
+from src.core import (
+    RequestLoggingMiddleware,
+    generic_exception_handler,
+    validation_exception_handler,
+)
 
 
 def create_app() -> FastAPI:
@@ -44,6 +50,11 @@ def create_app() -> FastAPI:
 
     # Configure request logging middleware
     app.add_middleware(RequestLoggingMiddleware)
+
+    # Register exception handlers
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(ValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)
 
     return app
 
