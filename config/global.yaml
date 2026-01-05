@@ -1,58 +1,232 @@
+# =============================================================================
 # Global Configuration for PX BugHunter
-# This file contains system-wide settings for database, LLM, output, and server configuration.
-# Environment variables can be referenced using ${VAR} or ${VAR:-default} syntax.
+# =============================================================================
+# This file contains system-wide settings for the entire application including
+# database, LLM, server, output, and logging configuration.
+#
+# Environment Variable Substitution:
+#   - Use ${VAR} to substitute an environment variable
+#   - Use ${VAR:-default} to provide a default value if VAR is not set
+#   - Example: ${DATABASE_URL:-postgresql://localhost:5432/mydb}
+#
+# Configuration Priority:
+#   1. Environment variables (highest priority)
+#   2. Values in this YAML file
+#   3. Default values defined in the code (lowest priority)
+# =============================================================================
 
+# -----------------------------------------------------------------------------
 # Application Metadata
+# -----------------------------------------------------------------------------
+# Basic information about the application
 app:
   name: "PX BugHunter"
   version: "0.1.0"
   description: "FastAPI application for receiving and processing Datadog bug report webhooks"
 
+# -----------------------------------------------------------------------------
 # Server Configuration
+# -----------------------------------------------------------------------------
+# Settings for the FastAPI web server
 server:
+  # Host address to bind to (0.0.0.0 = all interfaces, 127.0.0.1 = localhost only)
   host: "${HOST:-0.0.0.0}"
+
+  # Port number to listen on (1-65535)
   port: ${PORT:-8000}
+
+  # Environment mode (development, staging, production)
+  # - development: enables debug features, detailed error messages
+  # - staging: production-like with additional logging
+  # - production: optimized for performance and security
   environment: "${ENVIRONMENT:-development}"
+
+  # Debug mode - enables detailed error pages and auto-reload
+  # WARNING: Never set to true in production!
   debug: ${DEBUG:-false}
 
+# -----------------------------------------------------------------------------
 # Database Configuration
+# -----------------------------------------------------------------------------
+# PostgreSQL connection settings and connection pooling
 database:
+  # Database connection URL
+  # Format: postgresql://user:password@host:port/database
+  # Examples:
+  #   - postgresql://localhost:5432/px_bughunter
+  #   - postgresql://user:pass@db.example.com:5432/mydb
+  #   - postgresql+asyncpg://user:pass@localhost/db (for async)
   url: "${DATABASE_URL:-postgresql://localhost:5432/px_bughunter}"
+
+  # Number of connections to keep in the pool
+  # Higher values = more concurrent requests, but more memory usage
+  # Typical range: 5-20 for small apps, 20-100 for larger apps
   pool_size: ${DB_POOL_SIZE:-10}
+
+  # Maximum number of connections beyond pool_size
+  # When pool is exhausted, up to max_overflow additional connections can be created
+  # Total max connections = pool_size + max_overflow
   max_overflow: ${DB_MAX_OVERFLOW:-20}
+
+  # Seconds to wait for a connection from the pool before giving up
+  # Lower values = fail fast, higher values = more tolerant of spikes
   pool_timeout: ${DB_POOL_TIMEOUT:-30}
+
+  # Seconds after which a connection is automatically recycled
+  # Prevents stale connections and handles database restarts gracefully
+  # Set to -1 to disable recycling
   pool_recycle: ${DB_POOL_RECYCLE:-3600}
+
+  # Log all SQL statements (useful for debugging, but verbose)
+  # WARNING: This can log sensitive data - use only in development
   echo: ${DB_ECHO:-false}
 
-# LLM Configuration
+# -----------------------------------------------------------------------------
+# Large Language Model (LLM) Configuration
+# -----------------------------------------------------------------------------
+# Settings for AI-powered code analysis and bug detection
 llm:
+  # LLM provider to use
+  # Supported: openai, anthropic, azure, cohere, huggingface
   provider: "${LLM_PROVIDER:-openai}"
+
+  # Model name to use (provider-specific)
+  # OpenAI examples: gpt-4, gpt-4-turbo, gpt-3.5-turbo
+  # Anthropic examples: claude-3-opus, claude-3-sonnet, claude-2
   model: "${LLM_MODEL:-gpt-4}"
+
+  # API key for authentication with the LLM provider
+  # IMPORTANT: Never commit API keys to version control!
+  # Best practice: Set via environment variable or secrets manager
   api_key: "${LLM_API_KEY:-}"
+
+  # Sampling temperature (0.0 to 2.0)
+  # - 0.0: deterministic, focused, consistent
+  # - 0.7: balanced creativity and consistency (recommended)
+  # - 1.0+: more creative and varied, but less consistent
   temperature: ${LLM_TEMPERATURE:-0.7}
+
+  # Maximum number of tokens to generate in responses
+  # Higher values = longer responses, but more expensive and slower
+  # Typical ranges:
+  #   - Quick analysis: 500-1000
+  #   - Detailed analysis: 2000-4000
+  #   - Comprehensive reports: 4000+
   max_tokens: ${LLM_MAX_TOKENS:-2000}
+
+  # Request timeout in seconds
+  # How long to wait for LLM API response before giving up
   timeout: ${LLM_TIMEOUT:-60}
 
+# -----------------------------------------------------------------------------
 # Output Configuration
+# -----------------------------------------------------------------------------
+# Settings for analysis output formatting and storage
 output:
+  # Output format for analysis results
+  # Supported: json, yaml, text, markdown
   format: "${OUTPUT_FORMAT:-json}"
+
+  # Directory where output files are saved
+  # Can be relative (./output) or absolute (/var/log/px-bughunter)
   directory: "${OUTPUT_DIR:-./output}"
+
+  # Include metadata in output files (timestamps, version info, etc.)
+  # Useful for tracking and auditing, but increases file size
   include_metadata: ${OUTPUT_INCLUDE_METADATA:-true}
+
+  # Pretty-print output for human readability
+  # - true: formatted with indentation (easier to read)
+  # - false: compact single-line (smaller file size)
   pretty_print: ${OUTPUT_PRETTY_PRINT:-true}
 
-# CORS Configuration
+# -----------------------------------------------------------------------------
+# CORS (Cross-Origin Resource Sharing) Configuration
+# -----------------------------------------------------------------------------
+# Security settings for cross-origin requests from browsers
 cors:
+  # List of allowed origins (URLs that can make requests to this API)
+  # Examples:
+  #   - "http://localhost:3000" (local frontend dev server)
+  #   - "https://app.example.com" (production frontend)
+  #   - "*" (allow all origins - NOT recommended for production)
   origins:
     - "http://localhost:3000"
     - "http://localhost:8000"
+
+  # Allow cookies and authentication headers in cross-origin requests
+  # Required for authenticated requests from browsers
   allow_credentials: true
+
+  # Allowed HTTP methods
+  # Use ["*"] for all methods, or specify: ["GET", "POST", "PUT", "DELETE"]
   allow_methods:
     - "*"
+
+  # Allowed HTTP headers
+  # Use ["*"] for all headers, or specify: ["Content-Type", "Authorization"]
   allow_headers:
     - "*"
 
+# -----------------------------------------------------------------------------
 # Logging Configuration
+# -----------------------------------------------------------------------------
+# Settings for application logging and diagnostics
 logging:
+  # Logging level - controls verbosity of logs
+  # Available levels (from most to least verbose):
+  #   - DEBUG: detailed diagnostic information
+  #   - INFO: general informational messages (recommended for production)
+  #   - WARNING: warning messages for potentially harmful situations
+  #   - ERROR: error messages for serious problems
+  #   - CRITICAL: critical messages for very serious errors
   level: "${LOG_LEVEL:-INFO}"
+
+  # Log message format using Python logging format strings
+  # Available placeholders:
+  #   - %(asctime)s: timestamp
+  #   - %(name)s: logger name
+  #   - %(levelname)s: log level (DEBUG, INFO, etc.)
+  #   - %(message)s: actual log message
+  #   - %(filename)s: source file name
+  #   - %(lineno)d: line number
   format: "${LOG_FORMAT:-%(asctime)s - %(name)s - %(levelname)s - %(message)s}"
-  # file: "${LOG_FILE}"  # Optional: uncomment to enable file logging
+
+  # Optional: path to log file (uncomment to enable file logging)
+  # If not set, logs only go to stdout/stderr
+  # Examples:
+  #   - "./logs/app.log" (relative path)
+  #   - "/var/log/px-bughunter/app.log" (absolute path)
+  # file: "${LOG_FILE}"
+
+# =============================================================================
+# Configuration Tips
+# =============================================================================
+#
+# 1. Development vs Production:
+#    - Development: Use debug=true, echo=true, log level=DEBUG
+#    - Production: Use debug=false, echo=false, log level=INFO
+#
+# 2. Database Connection Pooling:
+#    - Start with pool_size=10, max_overflow=20
+#    - Monitor connection usage and adjust if needed
+#    - Rule of thumb: (pool_size + max_overflow) > peak concurrent requests
+#
+# 3. LLM Cost Management:
+#    - Lower temperature (0.3-0.5) for more consistent results
+#    - Lower max_tokens to reduce costs
+#    - Use cheaper models (gpt-3.5-turbo) for non-critical analysis
+#
+# 4. Security Best Practices:
+#    - Never commit api_key values directly
+#    - Use environment variables for sensitive data
+#    - Disable debug mode in production
+#    - Restrict CORS origins in production
+#    - Use HTTPS in production (not configured here)
+#
+# 5. Performance Tuning:
+#    - Increase pool_size for high-traffic applications
+#    - Reduce LLM timeout for faster failure detection
+#    - Disable pretty_print in production for smaller files
+#
+# =============================================================================

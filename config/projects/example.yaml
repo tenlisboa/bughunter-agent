@@ -1,90 +1,380 @@
+# =============================================================================
 # Project Configuration Template for PX BugHunter
-# Copy this file and rename it to create a new project configuration.
-# Example: cp example.yaml my-project.yaml
+# =============================================================================
+# This file defines project-specific settings including repository information,
+# file indexing rules, code ownership mapping, and analysis preferences.
+#
+# Creating a New Project:
+#   1. Copy this file: cp example.yaml my-project.yaml
+#   2. Update the 'name' field to match your filename (without .yaml)
+#   3. Configure repository URL and authentication
+#   4. Define indexing patterns for your codebase
+#   5. Set up ownership rules for your team structure
+#   6. Adjust analysis settings as needed
+#
+# Environment Variable Substitution:
+#   - Use ${VAR} to substitute an environment variable
+#   - Use ${VAR:-default} to provide a default value if VAR is not set
+#   - Example: ${PROJECT_REPO_URL:-https://github.com/org/repo.git}
+# =============================================================================
 
-# Project metadata
+# -----------------------------------------------------------------------------
+# Project Identity
+# -----------------------------------------------------------------------------
+# Unique identifier for this project (should match the filename without .yaml)
 name: "example-project"
+
+# Human-readable name for display in UI
 display_name: "Example Project"
-description: "Example project configuration template"
+
+# Brief description of the project
+description: "Example project configuration template demonstrating all available settings"
+
+# Enable/disable this project for analysis
+# Set to false to temporarily disable without deleting the config file
 enabled: true
 
-# Repository configuration
+# -----------------------------------------------------------------------------
+# Repository Configuration
+# -----------------------------------------------------------------------------
+# Git repository settings and authentication
 repository:
+  # Git repository URL (supports HTTPS and SSH)
+  # HTTPS example: https://github.com/organization/repository.git
+  # SSH example: git@github.com:organization/repository.git
   url: "${PROJECT_REPO_URL:-https://github.com/example/repo.git}"
-  branch: "${PROJECT_BRANCH:-main}"
-  clone_path: "${PROJECT_CLONE_PATH:-./repos/example-project}"
-  # Optional: Use SSH key for authentication (defaults to null if not set)
-  # ssh_key: "${PROJECT_SSH_KEY:-}"
-  # Optional: Use HTTPS credentials (defaults to null if not set)
-  # username: "${PROJECT_USERNAME:-}"
-  # password: "${PROJECT_PASSWORD:-}"
 
-# Programming languages used in this project
+  # Default branch to clone and analyze
+  # Common values: main, master, develop, production
+  branch: "${PROJECT_BRANCH:-main}"
+
+  # Local path where the repository will be cloned
+  # Can be relative (./repos/project-name) or absolute (/var/repos/project-name)
+  # Each project should have a unique clone path
+  clone_path: "${PROJECT_CLONE_PATH:-./repos/example-project}"
+
+  # --- Authentication Options (choose one method) ---
+
+  # Option 1: SSH Key Authentication (recommended for private repos)
+  # Path to SSH private key file for authentication
+  # Example: ~/.ssh/id_rsa or /secrets/deploy_key
+  # ssh_key: "${PROJECT_SSH_KEY}"
+
+  # Option 2: HTTPS Username/Password Authentication
+  # Username for HTTPS authentication (typically your GitHub/GitLab username)
+  # username: "${PROJECT_USERNAME}"
+  # Personal access token or password for HTTPS authentication
+  # IMPORTANT: Use personal access tokens, not passwords!
+  # password: "${PROJECT_PASSWORD}"
+
+  # Note: For public repositories, no authentication is needed
+
+# -----------------------------------------------------------------------------
+# Programming Languages
+# -----------------------------------------------------------------------------
+# List of primary programming languages used in this project
+# This information helps optimize analysis and select appropriate tools
 languages:
   - "python"
   - "javascript"
   - "typescript"
+  # Other supported languages:
+  # - "java"
+  # - "go"
+  # - "rust"
+  # - "ruby"
+  # - "php"
+  # - "c"
+  # - "cpp"
+  # - "csharp"
+  # - "swift"
+  # - "kotlin"
 
-# Indexing rules - Define which files to include/exclude from analysis
+# -----------------------------------------------------------------------------
+# File Indexing Configuration
+# -----------------------------------------------------------------------------
+# Define which files to include or exclude from analysis
 indexing:
-  # Include patterns (glob syntax)
+  # Include patterns (glob syntax) - files matching these will be analyzed
+  # Glob pattern syntax:
+  #   - *        matches any characters except /
+  #   - **       matches any characters including /
+  #   - ?        matches any single character
+  #   - [abc]    matches any character in the set
+  #   - {a,b}    matches any of the patterns
   include:
+    # Python files
     - "src/**/*.py"
+    - "app/**/*.py"
+    - "lib/**/*.py"
+
+    # JavaScript/TypeScript files
     - "src/**/*.js"
-    - "src/**/*.ts"
     - "src/**/*.jsx"
+    - "src/**/*.ts"
     - "src/**/*.tsx"
-  # Exclude patterns (glob syntax)
+
+    # Configuration files (optional)
+    # - "*.json"
+    # - "*.yaml"
+    # - "*.yml"
+    # - "*.toml"
+
+  # Exclude patterns (glob syntax) - files matching these will be skipped
+  # Exclusions take priority over inclusions
   exclude:
+    # Python build artifacts and caches
     - "**/__pycache__/**"
-    - "**/node_modules/**"
+    - "**/*.pyc"
+    - "**/*.pyo"
+    - "**/*.pyd"
     - "**/venv/**"
     - "**/.venv/**"
+    - "**/env/**"
+    - "**/.env/**"
+
+    # JavaScript/Node.js artifacts
+    - "**/node_modules/**"
     - "**/dist/**"
     - "**/build/**"
+    - "**/.next/**"
+    - "**/.nuxt/**"
+
+    # Test files (exclude if you don't want to analyze tests)
     - "**/*.test.py"
     - "**/*.test.js"
     - "**/*.test.ts"
+    - "**/*.spec.py"
     - "**/*.spec.js"
     - "**/*.spec.ts"
-  # Maximum file size to index (in KB)
+    - "**/tests/**"
+    - "**/__tests__/**"
+
+    # Version control and IDE files
+    - "**/.git/**"
+    - "**/.svn/**"
+    - "**/.hg/**"
+    - "**/.idea/**"
+    - "**/.vscode/**"
+    - "**/*.swp"
+    - "**/*.swo"
+
+    # Documentation and media (optional - include if you want docs analyzed)
+    - "**/*.md"
+    - "**/*.rst"
+    - "**/*.txt"
+    - "**/*.png"
+    - "**/*.jpg"
+    - "**/*.jpeg"
+    - "**/*.gif"
+    - "**/*.svg"
+
+    # Other common exclusions
+    - "**/vendor/**"
+    - "**/target/**"
+    - "**/.cache/**"
+    - "**/tmp/**"
+    - "**/temp/**"
+
+  # Maximum file size to analyze (in kilobytes)
+  # Files larger than this will be skipped
+  # Typical values:
+  #   - 100-500 KB: conservative (faster, less memory)
+  #   - 500-1000 KB: balanced (recommended)
+  #   - 1000+ KB: comprehensive (slower, more memory)
   max_file_size: 500
 
-# Ownership mapping - Map code paths to teams or individuals
+# -----------------------------------------------------------------------------
+# Code Ownership Configuration
+# -----------------------------------------------------------------------------
+# Map file paths to teams and individuals responsible for the code
+# Used for notifications, reports, and accountability
 ownership:
-  # Define ownership rules (first match wins)
+  # Ownership rules (evaluated in order, first match wins)
+  # Each rule defines a path pattern and the team/owners responsible
   rules:
+    # Frontend code ownership
     - path: "src/frontend/**"
       team: "frontend-team"
       owners:
         - "john.doe@example.com"
         - "jane.smith@example.com"
+      # Note: Use email addresses that match your organization's identity system
+
+    # Backend code ownership
     - path: "src/backend/**"
       team: "backend-team"
       owners:
         - "bob.johnson@example.com"
         - "alice.williams@example.com"
+
+    # API layer ownership
     - path: "src/api/**"
       team: "api-team"
       owners:
         - "charlie.brown@example.com"
+
+    # Database migrations and schemas
+    - path: "src/database/**"
+      team: "database-team"
+      owners:
+        - "david.lee@example.com"
+
+    # Infrastructure and DevOps
+    - path: "infrastructure/**"
+      team: "devops-team"
+      owners:
+        - "eva.martinez@example.com"
+
+    # Security-critical components
+    - path: "src/auth/**"
+      team: "security-team"
+      owners:
+        - "frank.wilson@example.com"
+        - "grace.taylor@example.com"
+
+    # Documentation
+    - path: "docs/**"
+      team: "documentation-team"
+      owners:
+        - "helen.anderson@example.com"
+
+    # Default/catch-all rule (should be last)
+    # Matches any file not caught by previous rules
     - path: "**"
       team: "general"
       owners:
         - "tech-lead@example.com"
 
-# Project-specific settings
+  # Tips for ownership rules:
+  # 1. Order matters - first match wins, so put specific rules first
+  # 2. Use "**" for the last rule to catch everything else
+  # 3. Multiple owners can share responsibility for a path
+  # 4. Overlapping paths are okay - most specific match will be used
+  # 5. Use team names that match your organization structure
+
+# -----------------------------------------------------------------------------
+# Project-Specific Analysis Settings
+# -----------------------------------------------------------------------------
+# Configure analysis features and notification preferences
 settings:
-  # Enable/disable specific analysis features
+  # --- Analysis Feature Toggles ---
+
+  # Enable static code analysis (linting, style checks, complexity analysis)
   enable_static_analysis: true
+
+  # Enable security vulnerability scanning (dependency checks, CVE scanning)
   enable_security_scanning: true
+
+  # Enable code quality checks (duplication detection, maintainability index)
   enable_code_quality_checks: true
-  # Notification preferences
+
+  # --- Notification Preferences ---
+
+  # Send notifications for high-severity issues (critical bugs, security vulnerabilities)
+  # Recommended: true for production projects
   notify_on_high_severity: true
+
+  # Send notifications for medium-severity issues (warnings, code smells)
+  # Recommended: false to avoid notification fatigue
   notify_on_medium_severity: false
+
+  # Notification channels to use
+  # Supported channels: slack, email, webhook, pagerduty, teams
   notification_channels:
     - "slack"
     - "email"
-  # Analysis thresholds
+    # - "pagerduty"  # Uncomment for critical projects
+    # - "teams"      # Uncomment if using Microsoft Teams
+
+  # --- Analysis Thresholds ---
+
+  # Cyclomatic complexity threshold
+  # Functions/methods with complexity above this will be flagged
+  # Typical values:
+  #   - 5-10: strict (encourages very simple functions)
+  #   - 10-15: balanced (recommended)
+  #   - 15-20: lenient (allows complex functions)
+  #   - 20+: very lenient (may miss maintainability issues)
   complexity_threshold: 10
+
+  # Code duplication threshold (percentage)
+  # Code blocks duplicated more than this percentage will be flagged
+  # Typical values:
+  #   - 3-5%: strict (catches most duplication)
+  #   - 5-10%: balanced (recommended)
+  #   - 10-15%: lenient (only catches significant duplication)
   duplication_threshold: 5
+
+# =============================================================================
+# Configuration Examples for Common Scenarios
+# =============================================================================
+#
+# 1. Microservice Project:
+#    - name: "payment-service"
+#    - languages: ["go"]
+#    - include: ["cmd/**/*.go", "internal/**/*.go", "pkg/**/*.go"]
+#    - exclude test files and vendor directory
+#
+# 2. Full-Stack Monorepo:
+#    - name: "company-platform"
+#    - languages: ["typescript", "python"]
+#    - include: ["frontend/**/*.ts", "backend/**/*.py"]
+#    - ownership: separate rules for frontend/backend teams
+#
+# 3. Mobile App:
+#    - name: "mobile-app"
+#    - languages: ["swift", "kotlin"]
+#    - include: ["ios/**/*.swift", "android/**/*.kt"]
+#    - ownership: separate rules for iOS/Android teams
+#
+# 4. Data Pipeline:
+#    - name: "data-pipeline"
+#    - languages: ["python"]
+#    - include: ["pipelines/**/*.py", "transformers/**/*.py"]
+#    - enable_security_scanning: true (for dependency vulnerabilities)
+#
+# 5. Open Source Library:
+#    - name: "my-library"
+#    - languages: ["python"]
+#    - include: ["src/**/*.py"]
+#    - exclude: ["tests/**", "examples/**"]
+#    - notify_on_high_severity: false (no critical notifications for OSS)
+#
+# =============================================================================
+
+# =============================================================================
+# Best Practices
+# =============================================================================
+#
+# 1. Start Small:
+#    - Begin with a single directory (e.g., "src/**/*.py")
+#    - Gradually expand include patterns as you verify they work
+#
+# 2. Be Specific:
+#    - Use specific include patterns rather than "**/*"
+#    - This improves performance and reduces false positives
+#
+# 3. Test Your Patterns:
+#    - Use command-line glob tools to test patterns before adding them
+#    - Example: find . -name "*.py" | grep -v "__pycache__"
+#
+# 4. Ownership Granularity:
+#    - Don't make rules too granular (file-level is usually too specific)
+#    - Component or module level is usually appropriate
+#
+# 5. Review Regularly:
+#    - Update ownership rules when team structure changes
+#    - Adjust thresholds based on team feedback and project evolution
+#    - Remove disabled notification channels to keep config clean
+#
+# 6. Security:
+#    - Never commit credentials directly (use environment variables)
+#    - Use SSH keys or personal access tokens for authentication
+#    - Rotate access tokens regularly
+#
+# 7. Environment-Specific Configs:
+#    - Use environment variables for values that differ by environment
+#    - Example: ${PROJECT_BRANCH:-main} allows override per environment
+#
+# =============================================================================
