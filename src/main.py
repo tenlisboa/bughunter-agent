@@ -5,6 +5,7 @@ the FastAPI application with proper configuration and metadata.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
 
@@ -14,7 +15,8 @@ def create_app() -> FastAPI:
 
     This factory function initializes a new FastAPI application with
     configuration values from the application settings, including
-    title, description, version, and other metadata.
+    title, description, version, and other metadata. It also configures
+    CORS middleware based on settings.
 
     Returns:
         FastAPI: Configured FastAPI application instance ready to use.
@@ -28,6 +30,15 @@ def create_app() -> FastAPI:
         description=settings.app_description,
         version=settings.app_version,
         debug=settings.debug,
+    )
+
+    # Configure CORS middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=settings.cors_allow_credentials,
+        allow_methods=settings.cors_allow_methods,
+        allow_headers=settings.cors_allow_headers,
     )
 
     return app
