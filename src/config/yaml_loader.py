@@ -8,7 +8,10 @@ import logging
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from src.config.models import GlobalConfig, ProjectConfig
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +263,7 @@ def clear_global_config_cache() -> None:
 
 
 # Singleton cache for project configurations
-_project_configs_cache: Optional[dict[str, "ProjectConfig"]] = None
+_project_configs_cache: dict[str, "ProjectConfig"] | None = None
 
 
 def load_project_configs(

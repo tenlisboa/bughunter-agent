@@ -1,10 +1,11 @@
 """Configuration management for the application."""
 
 # Legacy settings (environment variables)
-from .settings import Settings, settings
-
 # Configuration exceptions
 from .exceptions import ConfigurationError
+
+# Configuration manager
+from .manager import ConfigurationManager, get_config_manager
 
 # Configuration models
 from .models import (
@@ -23,9 +24,7 @@ from .models import (
     RepositoryConfig,
     ServerConfig,
 )
-
-# Configuration manager
-from .manager import ConfigurationManager, get_config_manager
+from .settings import Settings, settings
 
 # YAML loading utilities (for advanced usage)
 from .yaml_loader import (

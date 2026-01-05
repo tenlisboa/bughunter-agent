@@ -4,7 +4,6 @@ This module defines the data models for global and project-specific
 configuration using Pydantic for validation and type safety.
 """
 
-from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -76,7 +75,7 @@ class LLMConfig(BaseModel):
         default="gpt-4",
         description="Model name to use",
     )
-    api_key: Optional[str] = Field(
+    api_key: str | None = Field(
         default=None,
         description="API key for the LLM provider",
     )
@@ -122,7 +121,7 @@ class OutputConfig(BaseModel):
 class CORSConfig(BaseModel):
     """CORS (Cross-Origin Resource Sharing) configuration."""
 
-    origins: List[str] = Field(
+    origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8000"],
         description="Allowed CORS origins",
     )
@@ -130,11 +129,11 @@ class CORSConfig(BaseModel):
         default=True,
         description="Allow credentials in CORS requests",
     )
-    allow_methods: List[str] = Field(
+    allow_methods: list[str] = Field(
         default=["*"],
         description="Allowed HTTP methods",
     )
-    allow_headers: List[str] = Field(
+    allow_headers: list[str] = Field(
         default=["*"],
         description="Allowed HTTP headers",
     )
@@ -151,7 +150,7 @@ class LoggingConfig(BaseModel):
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         description="Log message format",
     )
-    file: Optional[str] = Field(
+    file: str | None = Field(
         default=None,
         description="Optional log file path",
     )
@@ -212,15 +211,15 @@ class RepositoryConfig(BaseModel):
     clone_path: str = Field(
         description="Local path where repository should be cloned",
     )
-    ssh_key: Optional[str] = Field(
+    ssh_key: str | None = Field(
         default=None,
         description="Optional SSH key path for authentication",
     )
-    username: Optional[str] = Field(
+    username: str | None = Field(
         default=None,
         description="Optional username for HTTPS authentication",
     )
-    password: Optional[str] = Field(
+    password: str | None = Field(
         default=None,
         description="Optional password/token for HTTPS authentication",
     )
@@ -229,11 +228,11 @@ class RepositoryConfig(BaseModel):
 class IndexingConfig(BaseModel):
     """Indexing rules configuration for project files."""
 
-    include: List[str] = Field(
+    include: list[str] = Field(
         default_factory=list,
         description="List of glob patterns for files to include in indexing",
     )
-    exclude: List[str] = Field(
+    exclude: list[str] = Field(
         default_factory=list,
         description="List of glob patterns for files to exclude from indexing",
     )
@@ -253,7 +252,7 @@ class OwnershipRule(BaseModel):
     team: str = Field(
         description="Team name responsible for this path",
     )
-    owners: List[str] = Field(
+    owners: list[str] = Field(
         default_factory=list,
         description="List of owner email addresses or identifiers",
     )
@@ -262,7 +261,7 @@ class OwnershipRule(BaseModel):
 class OwnershipConfig(BaseModel):
     """Ownership mapping configuration."""
 
-    rules: List[OwnershipRule] = Field(
+    rules: list[OwnershipRule] = Field(
         default_factory=list,
         description="List of ownership rules (first match wins)",
     )
@@ -291,7 +290,7 @@ class ProjectSettings(BaseModel):
         default=False,
         description="Send notifications for medium severity issues",
     )
-    notification_channels: List[str] = Field(
+    notification_channels: list[str] = Field(
         default_factory=list,
         description="List of notification channels (slack, email, etc.)",
     )
@@ -332,7 +331,7 @@ class ProjectConfig(BaseModel):
     repository: RepositoryConfig = Field(
         description="Repository configuration",
     )
-    languages: List[str] = Field(
+    languages: list[str] = Field(
         default_factory=list,
         description="List of programming languages used in the project",
     )

@@ -4,7 +4,6 @@ This module contains tests for the POST /webhook/{project_id} endpoint to verify
 it validates payloads correctly and handles both valid and invalid requests.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 

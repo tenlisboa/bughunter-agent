@@ -5,7 +5,6 @@ to provide clear, actionable error messages when configuration loading or
 validation fails.
 """
 
-from typing import Optional
 
 
 class ConfigurationError(Exception):
@@ -53,8 +52,8 @@ class ConfigurationError(Exception):
     def __init__(
         self,
         message: str,
-        filename: Optional[str] = None,
-        field: Optional[str] = None,
+        filename: str | None = None,
+        field: str | None = None,
     ) -> None:
         """Initialize the ConfigurationError.
 

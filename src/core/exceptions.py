@@ -6,7 +6,6 @@ responses across the application.
 """
 
 import logging
-from typing import Union
 
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 async def validation_exception_handler(
-    request: Request, exc: Union[RequestValidationError, ValidationError]
+    request: Request, exc: RequestValidationError | ValidationError
 ) -> JSONResponse:
     """Handle Pydantic validation errors with detailed error messages.
 

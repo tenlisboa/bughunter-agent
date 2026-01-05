@@ -19,7 +19,6 @@ from src.config import (
     ConfigurationManager,
     GlobalConfig,
     ProjectConfig,
-    get_config_manager,
 )
 from src.config.settings import Settings
 from src.config.yaml_loader import (
@@ -308,9 +307,6 @@ logging:
             clear_global_config_cache()
 
             # Create Settings instance (it should load from YAML)
-            # We need to temporarily override the default path
-            import src.config.yaml_loader as yaml_loader
-            original_default = "config/global.yaml"
 
             # Create a new Settings instance with YAML values
             # by loading the config first

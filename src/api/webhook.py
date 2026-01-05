@@ -6,7 +6,7 @@ bug report payloads from Datadog alert webhooks.
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Path
 
 from src.models import DatadogWebhookPayload, WebhookResponse
 

@@ -1,6 +1,5 @@
 """Pydantic models for API response validation."""
 
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -28,7 +27,7 @@ class HealthResponse(BaseModel):
         description="Current environment (development, staging, production)",
         min_length=1,
     )
-    database: Optional[dict[str, str]] = Field(
+    database: dict[str, str] | None = Field(
         default=None,
         description="Database connection status (placeholder for now)",
     )
@@ -136,7 +135,7 @@ class WebhookErrorResponse(WebhookResponse):
     error details for debugging purposes.
     """
 
-    error_detail: Optional[str] = Field(
+    error_detail: str | None = Field(
         default=None,
         description="Additional error information for debugging",
     )
