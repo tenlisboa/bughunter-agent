@@ -1,0 +1,160 @@
+"""YAML configuration loading utilities with environment variable substitution.
+
+This module provides utilities for loading YAML configuration files with support
+for environment variable substitution using ${VAR} and ${VAR:-default} syntax.
+"""
+
+import logging
+import os
+import re
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+# Regular expression to match ${VAR} or ${VAR:-default} patterns
+ENV_VAR_PATTERN = re.compile(r"\$\{([^}:]+)(?::(-)?([^}]*))?\}")
+
+
+def substitute_env_vars(value: Any) -> Any:
+    """Recursively substitute environment variables in configuration values.
+
+    Supports two syntaxes:
+    - ${VAR}: Required environment variable. Raises error if not found.
+    - ${VAR:-default}: Optional environment variable with default value.
+
+    The function recursively processes:
+    - Strings: Performs variable substitution
+    - Dicts: Recursively processes all values
+    - Lists: Recursively processes all items
+    - Other types: Returns as-is
+
+    Args:
+        value: The configuration value to process. Can be a string, dict, list,
+               or any other type.
+
+    Returns:
+        The processed value with environment variables substituted.
+
+    Raises:
+        ValueError: If a required environment variable (${VAR} without default)
+                   is not found in the environment.
+
+    Examples:
+        >>> os.environ['DB_HOST'] = 'localhost'
+        >>> substitute_env_vars('${DB_HOST}')
+        'localhost'
+
+        >>> substitute_env_vars('${MISSING_VAR:-default_value}')
+        'default_value'
+
+        >>> substitute_env_vars({'db': '${DB_HOST}:5432'})
+        {'db': 'localhost:5432'}
+
+        >>> substitute_env_vars(['${DB_HOST}', '${PORT:-8000}'])
+        ['localhost', '8000']
+    """
+    if isinstance(value, str):
+        return _substitute_env_vars_in_string(value)
+    elif isinstance(value, dict):
+        return {key: substitute_env_vars(val) for key, val in value.items()}
+    elif isinstance(value, list):
+        return [substitute_env_vars(item) for item in value]
+    else:
+        # Return other types (int, bool, None, etc.) as-is
+        return value
+
+
+def _substitute_env_vars_in_string(text: str) -> str:
+    """Substitute environment variables in a single string.
+
+    This is an internal helper function that performs the actual string
+    substitution logic for environment variable patterns.
+
+    Args:
+        text: The string to process.
+
+    Returns:
+        The string with environment variables substituted.
+
+    Raises:
+        ValueError: If a required environment variable is not found.
+    """
+    def replacer(match: re.Match[str]) -> str:
+        var_name = match.group(1)
+        has_default = match.group(2) is not None
+        default_value = match.group(3) if has_default else None
+
+        # Try to get the environment variable
+        env_value = os.environ.get(var_name)
+
+        if env_value is not None:
+            return env_value
+        elif has_default:
+            # Return default value (empty string if default_value is None)
+            return default_value if default_value is not None else ""
+        else:
+            # Required variable is missing
+            raise ValueError(
+                f"Required environment variable '{var_name}' is not set. "
+                f"Either set the variable or use '${{${var_name}:-default}}' syntax to provide a default value."
+            )
+
+    return ENV_VAR_PATTERN.sub(replacer, text)
+
+
+def load_yaml_with_env_vars(file_path: str) -> dict[str, Any]:
+    """Load a YAML file and substitute environment variables.
+
+    This function reads a YAML file, parses it, and recursively substitutes
+    all environment variable references in the configuration.
+
+    Args:
+        file_path: Path to the YAML file to load.
+
+    Returns:
+        The parsed YAML content as a dictionary with environment variables substituted.
+
+    Raises:
+        FileNotFoundError: If the YAML file does not exist.
+        ValueError: If a required environment variable is not found or if
+                   the YAML content is invalid.
+        yaml.YAMLError: If the YAML file is malformed.
+
+    Examples:
+        >>> # Assuming config.yaml contains: database: ${DB_URL:-postgresql://localhost/db}
+        >>> config = load_yaml_with_env_vars('config.yaml')
+        >>> config['database']
+        'postgresql://localhost/db'
+    """
+    import yaml
+
+    logger.debug(f"Loading YAML configuration from {file_path}")
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Configuration file not found: {file_path}")
+
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            raw_content = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        raise ValueError(f"Failed to parse YAML file {file_path}: {e}") from e
+
+    if raw_content is None:
+        logger.warning(f"YAML file {file_path} is empty, returning empty dict")
+        return {}
+
+    if not isinstance(raw_content, dict):
+        raise ValueError(
+            f"Expected YAML file {file_path} to contain a mapping (dict), "
+            f"but got {type(raw_content).__name__}"
+        )
+
+    try:
+        result = substitute_env_vars(raw_content)
+    except ValueError as e:
+        raise ValueError(f"Error in {file_path}: {e}") from e
+
+    # Assert the type for mypy since we know it's a dict at this point
+    assert isinstance(result, dict)
+    logger.debug(f"Successfully loaded configuration from {file_path}")
+    return result
