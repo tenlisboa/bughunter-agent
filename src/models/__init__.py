@@ -1,5 +1,5 @@
 """Pydantic models for request/response validation."""
 
-from .bug import StackTraceFrame
+from .bug import BugBody, StackTraceFrame
 
-__all__ = ["StackTraceFrame"]
+__all__ = ["BugBody", "StackTraceFrame"]
