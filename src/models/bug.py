@@ -103,3 +103,84 @@ class BugBody(BaseModel):
             ]
         }
     }
+
+
+class DatadogWebhookPayload(BaseModel):
+    """Represents a complete webhook payload from Datadog.
+
+    This model captures the full structure of a Datadog alert webhook including
+    metadata, alert details, and the bug report body. It validates the incoming
+    webhook data before processing.
+    """
+
+    id: str = Field(
+        ...,
+        description="Unique identifier for this alert event",
+        min_length=1,
+    )
+    title: str = Field(
+        ...,
+        description="Human-readable title of the alert",
+        min_length=1,
+    )
+    alert_type: str = Field(
+        ...,
+        description="Type of alert (e.g., 'error', 'warning', 'info')",
+        min_length=1,
+    )
+    priority: str = Field(
+        ...,
+        description="Alert priority level (e.g., 'critical', 'high', 'medium', 'low')",
+        min_length=1,
+    )
+    tags: list[str] = Field(
+        default_factory=list,
+        description="List of tags associated with the alert (e.g., environment, service, version)",
+    )
+    body: BugBody = Field(
+        ...,
+        description="Detailed bug report information including error details and stack trace",
+    )
+    date_happened: int = Field(
+        ...,
+        description="Unix timestamp (seconds) when the event occurred",
+        ge=0,
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "id": "1234567890",
+                    "title": "Error: NullPointerException in PaymentService",
+                    "alert_type": "error",
+                    "priority": "critical",
+                    "tags": ["env:production", "service:px-backend", "version:2.3.1"],
+                    "body": {
+                        "error_class": "NullPointerException",
+                        "error_message": "Cannot call method on null",
+                        "stack_trace": [
+                            {
+                                "file": "src/Services/PaymentService.php",
+                                "line": 145,
+                                "function": "process",
+                                "class": "App\\Services\\PaymentService",
+                            },
+                            {
+                                "file": "src/Utils/ValidationUtil.php",
+                                "line": 67,
+                                "function": "validate",
+                                "class": "App\\Utils\\ValidationUtil",
+                            },
+                        ],
+                        "context": {
+                            "user_id": "12345",
+                            "request_path": "/api/v1/payments",
+                            "request_method": "POST",
+                        },
+                    },
+                    "date_happened": 1699900000,
+                }
+            ]
+        }
+    }
