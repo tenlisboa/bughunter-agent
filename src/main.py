@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
+from src.api import health_router
 from src.config import settings
 from src.core import (
     RequestLoggingMiddleware,
@@ -55,6 +56,9 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)
     app.add_exception_handler(ValidationError, validation_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)
+
+    # Register routers
+    app.include_router(health_router)
 
     return app
 
