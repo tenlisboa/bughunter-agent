@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from src.api import health_router
+from src.api import health_router, webhook_router
 from src.config import settings
 from src.core import (
     RequestLoggingMiddleware,
@@ -59,6 +59,7 @@ def create_app() -> FastAPI:
 
     # Register routers
     app.include_router(health_router)
+    app.include_router(webhook_router)
 
     return app
 
