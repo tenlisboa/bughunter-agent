@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import settings
+from src.core import RequestLoggingMiddleware
 
 
 def create_app() -> FastAPI:
@@ -40,6 +41,9 @@ def create_app() -> FastAPI:
         allow_methods=settings.cors_allow_methods,
         allow_headers=settings.cors_allow_headers,
     )
+
+    # Configure request logging middleware
+    app.add_middleware(RequestLoggingMiddleware)
 
     return app
 
