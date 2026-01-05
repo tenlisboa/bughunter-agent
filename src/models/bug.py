@@ -1,6 +1,6 @@
 """Pydantic models for bug report data and webhook payloads."""
 
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -27,7 +27,7 @@ class StackTraceFrame(BaseModel):
         description="Function or method name being executed",
         min_length=1,
     )
-    class_name: Optional[str] = Field(
+    class_name: str | None = Field(
         default=None,
         description="Class name if the function is a method, None otherwise",
         alias="class",
@@ -70,7 +70,7 @@ class BugBody(BaseModel):
         description="List of stack trace frames showing the execution path that led to the error",
         min_length=1,
     )
-    context: Optional[dict[str, Any]] = Field(
+    context: dict[str, Any] | None = Field(
         default=None,
         description="Additional context information such as environment variables, request data, or custom metadata",
     )

@@ -4,7 +4,6 @@ This module contains tests for the /health endpoint to verify it returns
 the correct status code, response structure, and version information.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from src.config import settings

@@ -2,6 +2,7 @@
 .auto-claude/
 .auto-claude-status
 .worktrees/
+.coverage
 
 # Virtual environment
 .venv/
@@ -40,3 +41,6 @@ wheels/
 *.swp
 *.swo
 *~
+
+# Config files - Track YAML configurations
+# (Explicitly not ignoring config/*.yaml files for project configuration)
