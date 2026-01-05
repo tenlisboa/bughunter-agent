@@ -55,4 +55,4 @@ cors:
 logging:
   level: "${LOG_LEVEL:-INFO}"
   format: "${LOG_FORMAT:-%(asctime)s - %(name)s - %(levelname)s - %(message)s}"
-  file: "${LOG_FILE}"
+  # file: "${LOG_FILE}"  # Optional: uncomment to enable file logging

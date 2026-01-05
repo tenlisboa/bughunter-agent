@@ -7,7 +7,8 @@ for environment variable substitution using ${VAR} and ${VAR:-default} syntax.
 import logging
 import os
 import re
-from typing import Any
+from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -158,3 +159,101 @@ def load_yaml_with_env_vars(file_path: str) -> dict[str, Any]:
     assert isinstance(result, dict)
     logger.debug(f"Successfully loaded configuration from {file_path}")
     return result
+
+
+# Singleton cache for global configuration
+_global_config_cache: Optional["GlobalConfig"] = None
+
+
+def load_global_config(config_path: str = "config/global.yaml") -> "GlobalConfig":
+    """Load and validate the global configuration from YAML file.
+
+    This function loads the global configuration from the specified YAML file,
+    applies environment variable substitution, validates it against the GlobalConfig
+    Pydantic model, and caches the result as a singleton.
+
+    The configuration is cached on first load. Subsequent calls return the cached
+    instance unless the cache is cleared.
+
+    Args:
+        config_path: Path to the global configuration YAML file.
+                    Defaults to "config/global.yaml".
+
+    Returns:
+        GlobalConfig: The validated global configuration object.
+
+    Raises:
+        FileNotFoundError: If the configuration file does not exist.
+        ValueError: If the YAML file is malformed, environment variables are missing,
+                   or the configuration fails validation. The error message includes
+                   details about what failed validation.
+
+    Examples:
+        >>> config = load_global_config()
+        >>> print(config.database.url)
+        'postgresql://localhost:5432/px_bughunter'
+
+        >>> # With custom path
+        >>> config = load_global_config('config/custom.yaml')
+    """
+    global _global_config_cache
+
+    # Return cached config if available
+    if _global_config_cache is not None:
+        logger.debug("Returning cached global configuration")
+        return _global_config_cache
+
+    # Import here to avoid circular imports
+    from pydantic import ValidationError
+
+    from src.config.models import GlobalConfig
+
+    logger.info(f"Loading global configuration from {config_path}")
+
+    # Convert to absolute path if relative
+    if not os.path.isabs(config_path):
+        config_path = str(Path.cwd() / config_path)
+
+    # Load YAML with environment variable substitution
+    try:
+        config_data = load_yaml_with_env_vars(config_path)
+    except (FileNotFoundError, ValueError) as e:
+        logger.error(f"Failed to load configuration file: {e}")
+        raise
+
+    # Validate against GlobalConfig model
+    try:
+        config = GlobalConfig(**config_data)
+    except ValidationError as e:
+        error_msg = f"Configuration validation failed for {config_path}:\n"
+        for error in e.errors():
+            field = ".".join(str(loc) for loc in error["loc"])
+            error_msg += f"  - {field}: {error['msg']}\n"
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+
+    # Cache the validated config
+    _global_config_cache = config
+    logger.info("Global configuration loaded and validated successfully")
+
+    return config
+
+
+def clear_global_config_cache() -> None:
+    """Clear the cached global configuration.
+
+    This function clears the singleton cache for the global configuration,
+    forcing the next call to load_global_config() to reload and revalidate
+    the configuration file.
+
+    This is primarily useful for testing or when configuration files have
+    been updated and need to be reloaded.
+
+    Examples:
+        >>> config1 = load_global_config()
+        >>> clear_global_config_cache()
+        >>> config2 = load_global_config()  # Reloads from file
+    """
+    global _global_config_cache
+    _global_config_cache = None
+    logger.debug("Global configuration cache cleared")
