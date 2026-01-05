@@ -13,11 +13,11 @@ repository:
   url: "${PROJECT_REPO_URL:-https://github.com/example/repo.git}"
   branch: "${PROJECT_BRANCH:-main}"
   clone_path: "${PROJECT_CLONE_PATH:-./repos/example-project}"
-  # Optional: Use SSH key for authentication
-  ssh_key: "${PROJECT_SSH_KEY}"
-  # Optional: Use HTTPS credentials
-  username: "${PROJECT_USERNAME}"
-  password: "${PROJECT_PASSWORD}"
+  # Optional: Use SSH key for authentication (defaults to null if not set)
+  # ssh_key: "${PROJECT_SSH_KEY:-}"
+  # Optional: Use HTTPS credentials (defaults to null if not set)
+  # username: "${PROJECT_USERNAME:-}"
+  # password: "${PROJECT_PASSWORD:-}"
 
 # Programming languages used in this project
 languages:

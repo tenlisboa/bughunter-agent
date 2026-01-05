@@ -257,3 +257,151 @@ def clear_global_config_cache() -> None:
     global _global_config_cache
     _global_config_cache = None
     logger.debug("Global configuration cache cleared")
+
+
+# Singleton cache for project configurations
+_project_configs_cache: Optional[dict[str, "ProjectConfig"]] = None
+
+
+def load_project_configs(
+    projects_dir: str = "config/projects",
+) -> dict[str, "ProjectConfig"]:
+    """Load and validate all project configurations from YAML files.
+
+    This function discovers all *.yaml files in the specified projects directory,
+    loads each file with environment variable substitution, validates against the
+    ProjectConfig Pydantic model, and returns a dictionary mapping project names
+    to their configurations.
+
+    The configurations are cached on first load. Subsequent calls return the cached
+    dictionary unless the cache is cleared.
+
+    Args:
+        projects_dir: Path to the directory containing project YAML files.
+                     Defaults to "config/projects".
+
+    Returns:
+        dict[str, ProjectConfig]: Dictionary mapping project names to their
+                                 validated configuration objects.
+
+    Raises:
+        FileNotFoundError: If the projects directory does not exist.
+        ValueError: If any YAML file is malformed, environment variables are missing,
+                   or a configuration fails validation. The error message includes
+                   the filename and details about what failed.
+
+    Examples:
+        >>> configs = load_project_configs()
+        >>> print(configs['example-project'].repository.url)
+        'https://github.com/example/repo.git'
+
+        >>> # With custom path
+        >>> configs = load_project_configs('config/custom_projects')
+    """
+    global _project_configs_cache
+
+    # Return cached configs if available
+    if _project_configs_cache is not None:
+        logger.debug("Returning cached project configurations")
+        return _project_configs_cache
+
+    # Import here to avoid circular imports
+    from glob import glob
+
+    from pydantic import ValidationError
+
+    from src.config.models import ProjectConfig
+
+    logger.info(f"Loading project configurations from {projects_dir}")
+
+    # Convert to absolute path if relative
+    if not os.path.isabs(projects_dir):
+        projects_dir = str(Path.cwd() / projects_dir)
+
+    # Check that the directory exists
+    if not os.path.isdir(projects_dir):
+        raise FileNotFoundError(f"Projects directory not found: {projects_dir}")
+
+    # Discover all YAML files in the projects directory
+    yaml_pattern = os.path.join(projects_dir, "*.yaml")
+    yaml_files = glob(yaml_pattern)
+
+    if not yaml_files:
+        logger.warning(f"No YAML files found in {projects_dir}")
+        _project_configs_cache = {}
+        return _project_configs_cache
+
+    logger.info(f"Found {len(yaml_files)} project configuration file(s)")
+
+    # Load and validate each project configuration
+    project_configs: dict[str, ProjectConfig] = {}
+
+    for yaml_file in yaml_files:
+        filename = os.path.basename(yaml_file)
+        logger.debug(f"Loading project configuration from {filename}")
+
+        try:
+            # Load YAML with environment variable substitution
+            config_data = load_yaml_with_env_vars(yaml_file)
+
+            # Validate against ProjectConfig model
+            project_config = ProjectConfig(**config_data)
+
+            # Use the project's name field as the key
+            project_name = project_config.name
+
+            # Check for duplicate project names
+            if project_name in project_configs:
+                raise ValueError(
+                    f"Duplicate project name '{project_name}' found in {filename}. "
+                    f"Previously defined in another configuration file."
+                )
+
+            project_configs[project_name] = project_config
+            logger.info(
+                f"Successfully loaded project '{project_name}' from {filename}"
+            )
+
+        except ValidationError as e:
+            error_msg = f"Configuration validation failed for {filename}:\n"
+            for error in e.errors():
+                field = ".".join(str(loc) for loc in error["loc"])
+                error_msg += f"  - {field}: {error['msg']}\n"
+            logger.error(error_msg)
+            raise ValueError(error_msg) from e
+
+        except (FileNotFoundError, ValueError) as e:
+            # Re-raise with filename context if not already included
+            if filename not in str(e):
+                error_msg = f"Error loading {filename}: {e}"
+                logger.error(error_msg)
+                raise ValueError(error_msg) from e
+            raise
+
+    # Cache the validated configs
+    _project_configs_cache = project_configs
+    logger.info(
+        f"Successfully loaded {len(project_configs)} project configuration(s)"
+    )
+
+    return project_configs
+
+
+def clear_project_configs_cache() -> None:
+    """Clear the cached project configurations.
+
+    This function clears the singleton cache for project configurations,
+    forcing the next call to load_project_configs() to reload and revalidate
+    all configuration files.
+
+    This is primarily useful for testing or when configuration files have
+    been updated and need to be reloaded.
+
+    Examples:
+        >>> configs1 = load_project_configs()
+        >>> clear_project_configs_cache()
+        >>> configs2 = load_project_configs()  # Reloads from files
+    """
+    global _project_configs_cache
+    _project_configs_cache = None
+    logger.debug("Project configurations cache cleared")
