@@ -1,0 +1,58 @@
+# Global Configuration for PX BugHunter
+# This file contains system-wide settings for database, LLM, output, and server configuration.
+# Environment variables can be referenced using ${VAR} or ${VAR:-default} syntax.
+
+# Application Metadata
+app:
+  name: "PX BugHunter"
+  version: "0.1.0"
+  description: "FastAPI application for receiving and processing Datadog bug report webhooks"
+
+# Server Configuration
+server:
+  host: "${HOST:-0.0.0.0}"
+  port: ${PORT:-8000}
+  environment: "${ENVIRONMENT:-development}"
+  debug: ${DEBUG:-false}
+
+# Database Configuration
+database:
+  url: "${DATABASE_URL:-postgresql://localhost:5432/px_bughunter}"
+  pool_size: ${DB_POOL_SIZE:-10}
+  max_overflow: ${DB_MAX_OVERFLOW:-20}
+  pool_timeout: ${DB_POOL_TIMEOUT:-30}
+  pool_recycle: ${DB_POOL_RECYCLE:-3600}
+  echo: ${DB_ECHO:-false}
+
+# LLM Configuration
+llm:
+  provider: "${LLM_PROVIDER:-openai}"
+  model: "${LLM_MODEL:-gpt-4}"
+  api_key: "${LLM_API_KEY}"
+  temperature: ${LLM_TEMPERATURE:-0.7}
+  max_tokens: ${LLM_MAX_TOKENS:-2000}
+  timeout: ${LLM_TIMEOUT:-60}
+
+# Output Configuration
+output:
+  format: "${OUTPUT_FORMAT:-json}"
+  directory: "${OUTPUT_DIR:-./output}"
+  include_metadata: ${OUTPUT_INCLUDE_METADATA:-true}
+  pretty_print: ${OUTPUT_PRETTY_PRINT:-true}
+
+# CORS Configuration
+cors:
+  origins:
+    - "http://localhost:3000"
+    - "http://localhost:8000"
+  allow_credentials: true
+  allow_methods:
+    - "*"
+  allow_headers:
+    - "*"
+
+# Logging Configuration
+logging:
+  level: "${LOG_LEVEL:-INFO}"
+  format: "${LOG_FORMAT:-%(asctime)s - %(name)s - %(levelname)s - %(message)s}"
+  file: "${LOG_FILE}"
